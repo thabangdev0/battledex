@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme-based Image Slide Deck</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .controls {
+            padding: 20px;
+            text-align: center;
+            background-color: #f0f0f0;
+            z-index: 100;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .slide-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            background-color: black;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        .slide img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .countdown-slide {
+            background-color: white;
+            text-align: center;
+        }
+
+        .countdown-title {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .timer {
+            font-family: monospace;
+            font-size: 120px;
+            color: #007bff;
+        }
+
+        .loading {
+            color: white;
+            font-size: 24px;
+        }
+
+        .end-slide {
+            background-color: #333;
+            color: white;
+            font-size: 48px;
+            text-align: center;
+        }
+
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: auto;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 32px 24px;
+            border-radius: 12px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+            text-align: left;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+        }
+
+        .modal-content ul {
+            margin: 12px 0 12px 24px;
+        }
+
+        #close-modal-btn {
+            margin-top: 18px;
+            padding: 10px 24px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        #close-modal-btn:hover {
+            background: #0056b3;
+        }
+
+        .slide-timer-container {
+            position: absolute;
+            top: 24px;
+            right: 40px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 8px;
+            padding: 8px 20px;
+            z-index: 10;
+        }
+        .slide-timer {
+            color: #fff;
+            font-size: 48px;
+            font-family: monospace;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="intro-modal" class="modal">
+        <div class="modal-content">
+            <h2>Welcome to Battle Dex Slide Generator!</h2>
+            <p>
+                This tool helps you create a fast-paced, theme-based image slide deck for presentations or games.<br><br>
+                <strong>How it works:</strong>
+                <ul>
+                    <li>Enter a theme in the input box (e.g., "space", "nature", "technology").</li>
+                    <li>Click <b>Generate Slides</b> to start.</li>
+                    <li>A 10-second countdown will play before the slides begin.</li>
+                    <li>Five slides will be shown, each with a unique image related to your theme, for 30 seconds each.</li>
+                    <li>At the end, you'll see a closing slide.</li>
+                </ul>
+                <b>Tip:</b> Use this for improv presentations, classroom games, or creative challenges!
+            </p>
+            <button id="close-modal-btn">Start</button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <input type="text" id="theme-input" placeholder="Enter your theme">
+        <button onclick="generateSlides()">Generate Slides</button>
+    </div>
+    <div class="slide-container">
+        <div class="slide countdown-slide" id="intro-slide">
+            <div>
+                <div class="countdown-title">Presentation Starting In</div>
+                <div class="timer">10</div>
+            </div>
+        </div>
+        <div class="slide" id="slide1">
+            <div class="slide-timer-container">
+                <span class="slide-timer">30</span>
+            </div>
+        </div>
+        <div class="slide" id="slide2">
+            <div class="slide-timer-container">
+                <span class="slide-timer">30</span>
+            </div>
+        </div>
+        <div class="slide" id="slide3">
+            <div class="slide-timer-container">
+                <span class="slide-timer">30</span>
+            </div>
+        </div>
+        <div class="slide" id="slide4">
+            <div class="slide-timer-container">
+                <span class="slide-timer">30</span>
+            </div>
+        </div>
+        <div class="slide" id="slide5">
+            <div class="slide-timer-container">
+                <span class="slide-timer">30</span>
+            </div>
+        </div>
+        <div class="slide end-slide" id="end-slide">
+            <h1>The End</h1>
+        </div>
+    </div>
+
+    <audio id="beep-sound" preload="auto">
+        <source src="data:audio/wav;base64,//uQRAAAAWMSLwUIYAAsYkXgoQwAEaYLWfkWgAI0wWs/ItAAAGDgYtAgAyN+QWaAAihwMWm4G8QQRDiMcCBcH3Cc+CDv/7xA4Tvh9Rz/y8QADBwMWgQAZG/ILNAARQ4GLTcDeIIIhxGOBAuD7hOfBB3/94gcJ3w+o5/5eIAIAAAVwWgQAVQ2ORaIQwEMAJiDg95G4nQL7mQVWI6GwRcfsZAcsKkJvxgxEjzFUgfHoSQ9Qq7KNwqHwuB13MA4a1q/DmBrHgPcmjiGoh//EwC5nGPEmS4RcfkVKOhJf+WOgoxJclFz3kgn//dBA+ya1GhurNn8zb//9NNutNuhz31f////9vt///z+IdAEAAAK4LQIAKobHItEIYCGAExBwe8jcToF9zIKrEdDYIuP2MgOWFSE34wYiR5iqQPj0JIeoVdlG4VD4XA67mAcNa1fhzA1jwHuTRxDUQ//iYBczjHiTJcIuPyKlHQkv/LHQUYkuSi57yQT//uggfZNajQ3Vmz+Zt//+mm3Wm3Q576v////+32///5/EOgAAADVghQAAAAA="></source>
+    </audio>
+
+    <script>
+        let currentSlide = 0;
+        const UNSPLASH_ACCESS_KEY = 'AB5NAz7mZpA_ZbcYnvrNMB9ynd126tcrsSG8e2i9n1E';
+        const SLIDE_DURATION = 30000; // 30 seconds per slide
+        let slidesCompleted = 0;
+
+        async function getRandomImage(query) {
+            try {
+                const response = await fetch(
+                    `https://api.unsplash.com/photos/random?query=${query}&orientation=landscape`,
+                    {
+                        headers: {
+                            'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`
+                        }
+                    }
+                );
+                const data = await response.json();
+                return data.urls.regular;
+            } catch (error) {
+                console.error('Error fetching image:', error);
+                return null;
+            }
+        }
+
+        // Function to preload image
+        function preloadImage(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
+        async function generateSlides() {
+            const theme = document.getElementById('theme-input').value;
+            if (!theme) {
+                alert('Please enter a theme');
+                return;
+            }
+
+            // Reset counters
+            slidesCompleted = 0;
+            currentSlide = 0;
+
+            // Show intro slide with countdown first
+            await startCountdown();
+
+            const searchQueries = [
+                theme,
+                theme + ' abstract',
+                theme + ' detail',
+                theme + ' background',
+                theme + ' creative'
+            ];
+
+            try {
+                // Pre-fetch first image before starting slideshow
+                let nextImageUrl = await getRandomImage(searchQueries[0]);
+                let nextImage = await preloadImage(nextImageUrl);
+
+                // Generate and show slides one at a time
+                for (let i = 1; i <= 5; i++) {
+                    const currentSlide = document.getElementById(`slide${i}`);
+                    
+                    // Show current image
+                    // Remove all except timer container
+                    currentSlide.innerHTML = `
+                        <div class="slide-timer-container">
+                            <span class="slide-timer">30</span>
+                        </div>
+                    `;
+                    currentSlide.appendChild(nextImage.cloneNode(true));
+                    showSlide(i);
+
+                    // Start slide timer countdown
+                    const timerSpan = currentSlide.querySelector('.slide-timer');
+                    let timeLeft = 30;
+                    let timerInterval = setInterval(() => {
+                        timeLeft--;
+                        if (timerSpan) timerSpan.textContent = timeLeft;
+                        if (timeLeft <= 0) clearInterval(timerInterval);
+                    }, 1000);
+
+                    // Start preloading next image immediately
+                    let nextImagePromise = null;
+                    if (i < 5) {
+                        nextImagePromise = (async () => {
+                            const nextUrl = await getRandomImage(searchQueries[i]);
+                            return await preloadImage(nextUrl);
+                        })();
+                    }
+
+                    // Wait for slide duration
+                    await new Promise(resolve => setTimeout(resolve, SLIDE_DURATION));
+
+                    clearInterval(timerInterval);
+
+                    // Ensure next image is ready before continuing
+                    if (nextImagePromise) {
+                        nextImage = await nextImagePromise;
+                    }
+                }
+
+                // Show end slide after all slides are complete
+                showSlide('end');
+            } catch (error) {
+                console.error('Error generating slides:', error);
+                alert('Error generating slides. Please try again.');
+            }
+        }
+
+        async function startCountdown() {
+            const beepSound = document.getElementById('beep-sound');
+            const timer = document.querySelector('.timer');
+            showSlide('intro');
+            
+            for (let i = 10; i >= 1; i--) {
+                timer.textContent = i;
+                beepSound.play();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+
+        function showSlide(slideNumber) {
+            // Hide all slides
+            document.querySelectorAll('.slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+
+            // Show the requested slide
+            if (slideNumber === 'intro') {
+                document.getElementById('intro-slide').classList.add('active');
+            } else if (slideNumber === 'end') {
+                document.getElementById('end-slide').classList.add('active');
+            } else {
+                document.getElementById(`slide${slideNumber}`).classList.add('active');
+                slidesCompleted++;
+            }
+        }
+
+        // Modal functionality
+        const modal = document.getElementById('intro-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+
+        // Show the modal on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            modal.style.display = 'flex';
+            closeModalBtn.onclick = () => {
+                modal.style.display = 'none';
+            };
+        });
+
+        // Close the modal when clicking outside of the modal content
+        window.onclick = (event) => {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+    </script>
+</body>
+</html>
